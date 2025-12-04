@@ -397,6 +397,9 @@ vet scan -D . --report-summary
 # SBOM generation
 vet scan -D . --report-cdx=sbom.json
 
+# SBOM generation without remote lookups
+vet scan -D . --report-cdx=sbom.json --report-cdx-packages-only
+
 # Dependency graphs
 vet scan -D . --report-graph=dependencies.dot
 ```

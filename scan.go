@@ -77,6 +77,7 @@ var (
 	sarifIncludeMalware              bool
 	cyclonedxReportPath              string
 	cyclonedxReportApplicationName   string
+	cyclonedxPackagesOnly            bool
 	silentScan                       bool
 	disableAuthVerifyBeforeScan      bool
 	syncReport                       bool
@@ -212,6 +213,8 @@ func newScanCommand() *cobra.Command {
 		"Generate CycloneDX report to file")
 	cmd.Flags().StringVarP(&cyclonedxReportApplicationName, "report-cdx-app-name", "", "",
 		"Application name used as root application component in CycloneDX BOM")
+	cmd.Flags().BoolVar(&cyclonedxPackagesOnly, "report-cdx-packages-only", false,
+		"Disable remote enrichment and only enumerate packages when generating CycloneDX report")
 	cmd.Flags().StringVarP(&graphReportDirectory, "report-graph", "", "",
 		"Generate dependency graph (if available) as dot files to directory")
 	cmd.Flags().BoolVarP(&syncReport, "report-sync", "", false,
@@ -271,6 +274,10 @@ func newScanCommand() *cobra.Command {
 
 			if !utils.IsEmptyString(celFilterV2SuiteFile) && !utils.IsEmptyString(celPolicySuiteFile) {
 				return fmt.Errorf("cannot use both --filter-v2-suite and --policy-suite flags simultaneously")
+			}
+
+			if cyclonedxPackagesOnly && utils.IsEmptyString(cyclonedxReportPath) {
+				return fmt.Errorf("--report-cdx-packages-only requires --report-cdx to be set")
 			}
 
 			return nil
@@ -339,6 +346,14 @@ func internalStartScan() error {
 	readerList := []readers.PackageManifestReader{}
 	var reader readers.PackageManifestReader
 	var err error
+
+	if cyclonedxPackagesOnly {
+		enrich = false
+		enrichMalware = false
+		enrichMalwareQuery = false
+
+		ui.PrintMsg("CycloneDX packages-only mode enabled: skipping metadata enrichment and malware lookups")
+	}
 
 	githubClientBuilder := func() *github.Client {
 		githubClient, err := connect.GetGithubClient()
