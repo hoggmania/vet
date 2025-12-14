@@ -23,6 +23,7 @@
 dist/
 /.env.dev
 .vscode/
+/gen
 
 # MacOS specific files
 **/.DS_Store
